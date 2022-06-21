@@ -99,7 +99,11 @@ function parseOp(op: QuillOp, parsed: ParsedQuillDelta) {
         insertNewline(op, parsed);
     // handle text and text with newlines intermixed
     } else {
+        try{
         insertText(op, parsed);
+        } catch(e) {
+            insertEmbedParagraph(op, parsed);
+        }
     }
 }
 
