@@ -27,7 +27,7 @@ export interface LineAttributes {
     "code-block"?: boolean;
 }
 
-export interface Attributes extends RunAttributes, LineAttributes {}
+export interface Attributes extends RunAttributes, LineAttributes { }
 
 export interface QuillOp {
     insert?: string | InsertEmbed;
@@ -91,18 +91,18 @@ function parseOp(op: QuillOp, parsed: ParsedQuillDelta) {
     // handle videos and images
     if ((op.insert as InsertEmbed).video || (op.insert as InsertEmbed).image) {
         insertEmbedParagraph(op, parsed);
-    // handle formulas
+        // handle formulas
     } else if ((op.insert as InsertEmbed).formula) {
         insertFormula(op, parsed);
-    // handle exclusive newlines
+        // handle exclusive newlines
     } else if (op.insert === '\n') {
         insertNewline(op, parsed);
-    // handle text and text with newlines intermixed
+        // handle text and text with newlines intermixed
     } else {
-        try{
-        insertText(op, parsed);
-        } catch(e) {
+        if (typeof op.insert === 'object') {
             insertEmbedParagraph(op, parsed);
+        } else {
+            insertText(op, parsed);
         }
     }
 }
@@ -112,15 +112,27 @@ function startNewParagraph(parsed: ParsedQuillDelta) {
     parsed.paragraphs.push({
         textRuns: []
     });
+
 }
 
 // inserts a video or image embed
 function insertEmbedParagraph(op: QuillOp, parsed: ParsedQuillDelta) {
+
+    //If we insert an embed just after a paragraph, there are going to be two new lines
+    //let's remove the duplicate
+    if (
+        parsed?.paragraphs?.[parsed?.paragraphs?.length - 1]?.textRuns?.length == 1
+        &&
+        (<TextRun>parsed?.paragraphs?.[parsed?.paragraphs?.length - 1]?.textRuns?.[0]).text == ''
+    ) {
+        parsed.paragraphs.splice(parsed.paragraphs.length - 1, 1);
+    }
+
     parsed.paragraphs.push({
         embed: op.insert as InsertEmbed
     });
     activeNumberedList = false;
-    startNewParagraph(parsed);
+    // startNewParagraph(parsed);
 }
 
 // inserts a formula embed
@@ -128,7 +140,7 @@ function insertFormula(op: QuillOp, parsed: ParsedQuillDelta) {
     if (parsed.paragraphs.length === 0) {
         startNewParagraph(parsed);
     }
-    parsed.paragraphs[parsed.paragraphs.length-1].textRuns?.push({
+    parsed.paragraphs[parsed.paragraphs.length - 1].textRuns?.push({
         formula: (op.insert as InsertEmbed).formula!,
         attributes: op.attributes
     });
@@ -138,7 +150,7 @@ function insertFormula(op: QuillOp, parsed: ParsedQuillDelta) {
 function insertNewline(op: QuillOp, parsed: ParsedQuillDelta) {
     // if line attributes, apply those to the previous paragraph
     if (op.attributes) {
-        parsed.paragraphs[parsed.paragraphs.length-1].attributes = op.attributes;
+        parsed.paragraphs[parsed.paragraphs.length - 1].attributes = op.attributes;
         if (op.attributes.list === 'ordered') {
             // if already an active numbered list
             if (activeNumberedList) {
@@ -159,9 +171,11 @@ function insertNewline(op: QuillOp, parsed: ParsedQuillDelta) {
 
 // inserts text with intermixed newlines and run attributes
 function insertText(op: QuillOp, parsed: ParsedQuillDelta) {
+    
     if (parsed.paragraphs.length === 0) {
         startNewParagraph(parsed);
     }
+    
     // if it contains newline characters
     if ((op.insert as string).match(/\n/)) {
         const strings = splitStrings((op.insert as string));
@@ -181,7 +195,7 @@ function insertText(op: QuillOp, parsed: ParsedQuillDelta) {
 // inserts simple string with attributes
 function insertSimpleString(text: string, parsed: ParsedQuillDelta, attributes?: RunAttributes) {
     if (attributes) {
-        parsed.paragraphs[parsed.paragraphs.length-1].textRuns?.push({
+        parsed.paragraphs[parsed.paragraphs.length - 1].textRuns?.push({
             text: text,
             attributes: attributes
         });
@@ -189,7 +203,7 @@ function insertSimpleString(text: string, parsed: ParsedQuillDelta, attributes?:
             parsed.setup.hyperlinks.push({ text: text, link: attributes.link });
         }
     } else {
-        parsed.paragraphs[parsed.paragraphs.length-1].textRuns?.push({
+        parsed.paragraphs[parsed.paragraphs.length - 1].textRuns?.push({
             text: text
         });
     }
