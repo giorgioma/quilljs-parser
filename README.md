@@ -119,7 +119,12 @@ paragraphs: [{
 
 The other type of content that a paragraph object can contain is an `embed`. An `embed` is an object with either a `video` property or an `image` property. Both values of the property must be a string.
 
-*Note: A QuillJS embed can also be a `formula`, but the parser treats formula embeds as text runs (because a formula can run inline with a paragraph), so they are simply inserted into the `textRuns` property of the paragraph.*
+A QuillJS embed can also be a `formula`, the parser treats formula embeds as text runs (because a formula can run inline with a paragraph), so they are simply inserted into the `textRuns` property of the paragraph.
+
+Custom Embeds are all accepted.
+They are treated as text runs forcing the user to insert a new line, or the custom renderer to break the element to a new line.
+
+
 
 ### `attributes`
 
