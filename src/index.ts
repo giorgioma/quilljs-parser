@@ -48,7 +48,7 @@ export interface TextRun {
 }
 
 export interface Paragraph {
-    textRuns?: (TextRun | { formula: string })[];
+    textRuns?: (TextRun | { formula: string } | { embed: any })[];
     embed?: InsertEmbed;
     attributes?: LineAttributes;
 }
@@ -118,21 +118,15 @@ function startNewParagraph(parsed: ParsedQuillDelta) {
 // inserts a video or image embed
 function insertEmbedParagraph(op: QuillOp, parsed: ParsedQuillDelta) {
 
-    //If we insert an embed just after a paragraph, there are going to be two new lines
-    //let's remove the duplicate
-    if (
-        parsed?.paragraphs?.[parsed?.paragraphs?.length - 1]?.textRuns?.length == 1
-        &&
-        (<TextRun>parsed?.paragraphs?.[parsed?.paragraphs?.length - 1]?.textRuns?.[0]).text == ''
-    ) {
-        parsed.paragraphs.splice(parsed.paragraphs.length - 1, 1);
+    if (parsed.paragraphs.length === 0) {
+        startNewParagraph(parsed);
     }
-
-    parsed.paragraphs.push({
-        embed: op.insert as InsertEmbed
+    parsed.paragraphs[parsed.paragraphs.length - 1].textRuns?.push({
+        embed: op.insert! as InsertEmbed,
+        attributes: op.attributes
     });
     activeNumberedList = false;
-    // startNewParagraph(parsed);
+    
 }
 
 // inserts a formula embed
