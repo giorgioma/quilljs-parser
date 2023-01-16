@@ -171,7 +171,7 @@ function insertText(op: QuillOp, parsed: ParsedQuillDelta) {
     }
     
     // if it contains newline characters
-    if ((op.insert as string).match(/\n/)) {
+    if ((typeof op.insert === 'string' || op.insert instanceof String) && (op.insert).match(/\n/)) {
         const strings = splitStrings((op.insert as string));
         for (const text of strings) {
             if (text === '\n') {
